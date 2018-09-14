@@ -1,0 +1,12 @@
+{
+  "name": "coop",
+  "version": "0.0.1",
+  "dependencies": {
+    "connect": "",
+    "http": "",
+    "compression": "",
+    "cookie-session": "",
+    "body-parser": "",
+    "web3": "1.0.0-beta.36"
+  }
+}
