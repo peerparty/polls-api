@@ -1,6 +1,6 @@
 const Web3 = require('web3'),
   fs = require('fs'),
-  contractAddr = require('./address')
+  contractAddr = require('../address')
 
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 const source = fs.readFileSync("../posts.json")
