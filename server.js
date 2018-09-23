@@ -29,6 +29,10 @@ async function handlePosts(req, res) {
   }
 }
 
+async function handlePost(req, res, postId) {
+  sendRes(req, res, await posts.getPost(postId))
+}
+
 async function handlePostVotes(req, res, postId) {
   if(req.method == 'POST') {
     if(await posts.votePost(postId, req.body.up === 'true', req.session.addr)) {
@@ -75,6 +79,8 @@ function processRequest(req, res) {
   let m
   if(m = /\/api\/posts$/.exec(url.pathname))
     handlePosts(req, res)
+  else if(m = /\/api\/posts\/(\d+)$/.exec(url.pathname))
+    handlePost(req, res, m[1])
   else if(m = /\/api\/posts\/(\d+)\/votes/.exec(url.pathname))
     handlePostVotes(req, res, m[1])
   else if(m = /\/api\/posts\/(\d+)\/comments/.exec(url.pathname))
