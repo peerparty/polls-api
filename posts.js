@@ -47,6 +47,32 @@ exports.getComment = async (commentId) => {
   
 }
 
+function getConsensus(obj) {
+  let consensus = false 
+  if(obj.votes) {
+    let up = obj.votes[0].up
+    for(let i = 1; i < obj.votes.length; i++) {
+      consensus = up === obj.votes[i].up
+    }
+  }
+  return consensus
+}
+
+function aggregateConsensus(obj, aggregator) {
+  let consensus = getConsensus(obj)
+  if(consensus) aggregator.push({
+    id: obj.id,
+    comment: obj.comment ? obj.comment : obj.title,
+    type: obj.comment ? 'comment' : 'post' 
+  })
+  if(obj.comments) {
+    for(let comment of obj.comments) {
+      aggregateConsensus(comment, aggregator)
+    }
+  }
+  return aggregator
+}
+
 exports.getPost = async (postId) => {
   let post = await contract.methods.posts(postId).call()
 
@@ -64,6 +90,9 @@ exports.getPost = async (postId) => {
     if(post.comments) post.comments.push(comment)
     else post.comments = [ comment ]
   }
+
+  post.consensus = aggregateConsensus(post, [])
+
   return post
 }
 
