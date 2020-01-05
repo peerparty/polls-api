@@ -20,6 +20,10 @@ function fail(req, res, err) {
   res.status(500).json({ 'msg': 'Server error' })
 }
 
+function getUser(req, res) {
+  res.json({'user': req.session.user})
+}
+
 function login(req, res) {
   if(creds[req.body.name].pwd == req.body.pwd) {
     req.session.user = req.body.name
@@ -97,6 +101,7 @@ app.use(session({
 }))
 
 app.use(bodyParser.urlencoded({extended: false}))
+app.get(`${pathPrefix}/`, auth, getUser)
 app.post(`${pathPrefix}/login`, login)
 app.post(`${pathPrefix}/posts`, auth, postPosts)
 app.get(`${pathPrefix}/posts`, auth, getPosts)
