@@ -42,6 +42,13 @@ function logout(req, res) {
   })
 }
 
+async function createAccount(req, res) {
+  try {
+    const a = await posts.createAccount(req.body.pwd)
+    res.json(a)
+  } catch(err) { fail(req, res, err) }
+}
+
 async function postPosts(req, res) {
   try {
     await posts.addPost(req.body.title, req.body.description, req.session.addr)
@@ -100,9 +107,10 @@ app.use(session({
   saveUninitialized: true
 }))
 
-app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.urlencoded({ extended: false }))
 app.get(`${pathPrefix}/`, auth, getUser)
 app.post(`${pathPrefix}/login`, login)
+app.post(`${pathPrefix}/users`, createAccount)
 app.post(`${pathPrefix}/posts`, auth, postPosts)
 app.get(`${pathPrefix}/posts`, auth, getPosts)
 app.get(`${pathPrefix}/posts/:id`, auth, getPost)
