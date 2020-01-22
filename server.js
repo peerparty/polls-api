@@ -101,7 +101,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }))
 app.use(bodyParser.json({ limit: '50mb' }))
 app.use(cookieParser())
 app.use(session({
-  secret: 'keyboard cat',
+  secret: creds['secret'],
   cookie: { maxAge: 600000 },
   resave: false,
   saveUninitialized: true
@@ -110,6 +110,7 @@ app.use(session({
 app.use(bodyParser.urlencoded({ extended: false }))
 app.get(`${pathPrefix}/`, auth, getUser)
 app.post(`${pathPrefix}/login`, login)
+app.post(`${pathPrefix}/logout`, auth, logout)
 app.post(`${pathPrefix}/users`, createAccount)
 app.post(`${pathPrefix}/posts`, auth, postPosts)
 app.get(`${pathPrefix}/posts`, auth, getPosts)
