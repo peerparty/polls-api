@@ -25,6 +25,7 @@ function getUser(req, res) {
 }
 
 function login(req, res) {
+  console.log("LOGIN?", req.body)
   if(creds[req.body.name].pwd == req.body.pwd) {
     req.session.user = req.body.name
     req.session.auth = true
@@ -108,7 +109,7 @@ app.use(session({
 }))
 
 app.use(bodyParser.urlencoded({ extended: false }))
-app.get(`${pathPrefix}/`, auth, getUser)
+app.get(`${pathPrefix}/me`, auth, getUser)
 app.post(`${pathPrefix}/login`, login)
 app.post(`${pathPrefix}/logout`, auth, logout)
 app.post(`${pathPrefix}/users`, createAccount)
