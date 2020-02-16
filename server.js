@@ -25,7 +25,6 @@ function getUser(req, res) {
 }
 
 function login(req, res) {
-  console.log("LOGIN?", req.body)
   if(creds[req.body.name].pwd == req.body.pwd) {
     req.session.user = req.body.name
     req.session.auth = true

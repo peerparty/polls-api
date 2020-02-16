@@ -48,29 +48,17 @@ exports.getComment = async (commentId) => {
 }
 
 function getConsensus(obj) {
-  let consensus = false 
   if(obj.votes) {
-    let up = obj.votes[0].up
-    for(let i = 1; i < obj.votes.length; i++) {
-      consensus = up === obj.votes[i].up
-    }
-  }
-  return consensus
+    const up = obj.votes.reduce((c, v) => (v.up ? c + 1 : c), 0)
+    const down = obj.votes.reduce((c, v) => (!v.up ? c + 1 : c), 0)
+    return (up > 1 && down === 0) || (down > 1 && up ===0)
+  } else return false
 }
 
-function aggregateConsensus(obj, aggregator) {
-  let consensus = getConsensus(obj)
-  if(consensus) aggregator.push({
-    id: obj.id,
-    comment: obj.comment ? obj.comment : obj.title,
-    type: obj.comment ? 'comment' : 'post' 
-  })
-  if(obj.comments) {
-    for(let comment of obj.comments) {
-      aggregateConsensus(comment, aggregator)
-    }
-  }
-  return aggregator
+function aggregateConsensus(obj, a) {
+  if(getConsensus(obj)) a = [...a, obj]
+  if(obj.comments) a = obj.comments.reduce((a, c) => aggregateConsensus(c, a), a)
+  return a
 }
 
 exports.getPost = async (postId) => {
