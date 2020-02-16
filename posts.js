@@ -75,6 +75,7 @@ exports.getPost = async (postId) => {
   const postComments = await contract.methods.getPostComments(postId).call()
   for(let j = 0; j < postComments.length; j++) {
     const comment = await this.getComment(postComments[j])
+    comment.consensus = getConsensus(comment)
     if(post.comments) post.comments.push(comment)
     else post.comments = [ comment ]
   }
