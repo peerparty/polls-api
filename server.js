@@ -31,7 +31,7 @@ function login(req, res) {
     req.session.addr = creds[req.body.name].addr
     req.session.pwd = req.body.pwd
     posts.unlockAccount(req.session.addr, req.body.pwd)
-    res.json({ 'msg': 'Success' })
+    res.json({ 'user': req.session.user })
   } else res.status(403).json({ 'msg': 'Unauthorized'})
 }
 
