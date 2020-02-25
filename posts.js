@@ -63,7 +63,7 @@ function aggregateConsensus(obj, a) {
 
 exports.getPost = async (postId) => {
   let post = await contract.methods.posts(postId).call()
-
+  post.consensus = getConsensus(post)
   const postVotes = await contract.methods.getPostVotes(postId).call()
   for(let j = 0; j < postVotes.length; j++) {
     const voteIndex = postVotes[j]
@@ -80,7 +80,7 @@ exports.getPost = async (postId) => {
     else post.comments = [ comment ]
   }
 
-  post.consensus = aggregateConsensus(post, [])
+  post.moments = aggregateConsensus(post, [])
 
   return post
 }
