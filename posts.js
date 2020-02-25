@@ -3,9 +3,9 @@ const Web3 = require('web3'),
   contractAddr = require('../address')
 
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
-const source = fs.readFileSync("../posts.json")
+const source = fs.readFileSync("../consensus.json")
 const contracts = JSON.parse(source)["contracts"]
-const abi = JSON.parse(contracts["posts.sol:Posts"].abi)
+const abi = JSON.parse(contracts["consensus.sol:Posts"].abi)
 const contract = new web3.eth.Contract(abi, contractAddr.contractAddress)
 
 exports.addPost = async (title, description, addr) => {
@@ -56,7 +56,7 @@ function getConsensus(obj) {
 }
 
 function aggregateConsensus(obj, a) {
-  if(getConsensus(obj)) a = [...a, obj]
+  if(getConsensus(obj)) a = [...a, [obj[0], obj[1], obj[2]]]
   if(obj.comments) a = obj.comments.reduce((a, c) => aggregateConsensus(c, a), a)
   return a
 }
