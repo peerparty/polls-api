@@ -32,7 +32,7 @@ function login(req, res) {
     req.session.pwd = req.body.pwd
     req.session.balance = posts.getBalance(req.session.addr)
     posts.unlockAccount(req.session.addr, req.body.pwd)
-    res.json({ 'msg': 'Success' })
+    res.json({ 'user': req.session.user })
   } else res.status(403).json({ 'msg': 'Unauthorized'})
 }
 
