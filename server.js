@@ -21,7 +21,7 @@ function fail(req, res, err) {
 }
 
 function getUser(req, res) {
-  res.json({'user': req.session.user})
+  res.json({user: req.session.user, balance: req.session.balance})
 }
 
 function login(req, res) {
@@ -30,6 +30,7 @@ function login(req, res) {
     req.session.auth = true
     req.session.addr = creds[req.body.name].addr
     req.session.pwd = req.body.pwd
+    req.session.balance = posts.getBalance(req.session.addr)
     posts.unlockAccount(req.session.addr, req.body.pwd)
     res.json({ 'msg': 'Success' })
   } else res.status(403).json({ 'msg': 'Unauthorized'})
