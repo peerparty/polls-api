@@ -35,8 +35,8 @@ exports.getComment = async (commentId) => {
   for(let k = 0; k < commentVotes.length; k++) {
     const voteIndex = commentVotes[k]
     const vote = await contract.methods.votes(voteIndex).call()
-    if(comment.votes) comment.votes.push(vote)
-    else comment.votes = [ vote ]
+    if(comment.votes && !vote.changed) comment.votes.push(vote)
+    else if(!vote.changed) comment.votes = [ vote ]
   }
 
   const commentComments = await contract.methods.getCommentComments(commentId)
@@ -73,8 +73,8 @@ exports.getPost = async (postId) => {
   for(let j = 0; j < postVotes.length; j++) {
     const voteIndex = postVotes[j]
     const vote = await contract.methods.votes(voteIndex).call()
-    if(post.votes) post.votes.push(vote)
-    else post.votes = [ vote ]
+    if(post.votes && !vote.changed) post.votes.push(vote)
+    else if(!vote.changed) post.votes = [ vote ]
   }
 
   const postComments = await contract.methods.getPostComments(postId).call()
