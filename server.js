@@ -20,19 +20,20 @@ function fail(req, res, err) {
   res.status(500).json({ 'msg': 'Server error' })
 }
 
-function getUser(req, res) {
+async function getUser(req, res) {
+  req.session.balance = await posts.getBalance(req.session.addr)
   res.json({user: req.session.user, balance: req.session.balance})
 }
 
-function login(req, res) {
+async function login(req, res) {
   if(creds[req.body.name].pwd == req.body.pwd) {
     req.session.user = req.body.name
     req.session.auth = true
     req.session.addr = creds[req.body.name].addr
     req.session.pwd = req.body.pwd
-    req.session.balance = posts.getBalance(req.session.addr)
+    req.session.balance = await posts.getBalance(req.session.addr)
     posts.unlockAccount(req.session.addr, req.body.pwd)
-    res.json({ 'user': req.session.user })
+    res.json({user: req.session.user, balance: req.session.balance})
   } else res.status(403).json({ 'msg': 'Unauthorized'})
 }
 

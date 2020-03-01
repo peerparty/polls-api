@@ -8,8 +8,9 @@ const contracts = JSON.parse(source)["contracts"]
 const abi = JSON.parse(contracts["consensus.sol:Posts"].abi)
 const contract = new web3.eth.Contract(abi, contractAddr.contractAddress)
 
-exports.getBalance = addr => {
-  return web3.fromWei(web3.eth.getBalance(addr));
+exports.getBalance = async addr => {
+  let b = await web3.eth.getBalance(addr)
+  return web3.utils.fromWei(`${b}`, 'ether')
 }
 
 exports.addPost = async (title, description, addr) => {
