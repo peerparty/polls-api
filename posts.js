@@ -28,7 +28,7 @@ exports.countPosts = async () => {
   return c
 }
 
-exports.getComment = async (commentId) => {
+async function getComment(commentId) {
   let comment = await contract.methods.comments(commentId).call()
   
   const commentVotes = await contract.methods.getCommentVotes(commentId).call()
@@ -44,17 +44,19 @@ exports.getComment = async (commentId) => {
     .call()
   for(let k = 0; k < commentComments.length; k++) {
     const commentIndex = commentComments[k]
-    const comments = await this.getComment(commentComments[k])
+    const comments = await getComment(commentComments[k])
     if(comment.comments) comment.comments.push(comments)
     else comment.comments = [ comments ]
   }
 
   return comment
-  
+}
+
+exports.getComment = async (commentId) => {
+  return await getComment(commentId)
 }
 
 function getConsensus(obj) {
-  console.log(">>>>>>", obj)
   if(obj.votes) {
     const votes = obj.votes.filter(v => !v.changed)
     console.log(votes)
@@ -76,7 +78,16 @@ function aggregateConsensus(obj, a) {
   return a
 }
 
-exports.getPost = async (postId) => {
+function getCommentsCount(obj) {
+  return obj.comments ? obj.comments.reduce((count, comment) => count + getCommentsCount(comment), obj.comments.length) : 0
+}
+
+function getVotesCount(obj) {
+  const votesCount = obj.votes ? obj.votes.length : 0
+  return obj.comments ? obj.comments.reduce((count, comment) => count + getVotesCount(comment), votesCount) : votesCount
+}
+
+async function getPost(postId) {
   let post = await contract.methods.posts(postId).call()
   const postVotes = await contract.methods.getPostVotes(postId).call()
   for(let j = 0; j < postVotes.length; j++) {
@@ -90,21 +101,28 @@ exports.getPost = async (postId) => {
 
   const postComments = await contract.methods.getPostComments(postId).call()
   for(let j = 0; j < postComments.length; j++) {
-    const comment = await this.getComment(postComments[j])
+    const comment = await getComment(postComments[j])
     if(post.comments) post.comments.push(comment)
     else post.comments = [ comment ]
   }
+
+  post.commentsCount = getCommentsCount(post)
+  post.votesCount = getVotesCount(post)
 
   post.moments = aggregateConsensus(post, [])
 
   return post
 }
 
+exports.getPost = async (postId) => {
+  return await getPost(postId)
+}
+
 exports.getPosts = async () => {
   const c = await contract.methods.postCount().call()
   let posts = []
   for(let i = 0; i < c; i++) {
-    posts.push(await contract.methods.posts(i).call())
+    posts.push(await getPost(i))
   }
 
   return posts
