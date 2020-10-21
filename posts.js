@@ -15,33 +15,32 @@ exports.getBalance = async addr => {
 
 exports.addPost = async (title, description, addr) => {
   const addPost = contract.methods.addPost(title, description)
-  const gas = await addPost.estimateGas()
+  const gas = await addPost.estimateGas({from: addr})
   console.log("addPost gas: " + gas)
   const tx = await addPost.send({from: addr, gas: gas})
   console.log(tx.status ? "SUCCESS: Post added." : "Tx FAILED.")
   return tx.status
 }
 
-exports.countPosts = async () => {
-  const c = await contract.methods.postCount().call()
+exports.countPosts = async (addr) => {
+  const c = await contract.methods.postCount().call({from: addr})
   console.log("# Posts: " + c)
   return c
 }
 
-async function getComment(commentId) {
-  let comment = await contract.methods.comments(commentId).call()
+async function getComment(commentId, addr) {
+  let comment = await contract.methods.comments(commentId).call({from: addr})
   
-  const commentVotes = await contract.methods.getCommentVotes(commentId).call()
+  const commentVotes = await contract.methods.getCommentVotes(commentId).call({from: addr})
   for(let k = 0; k < commentVotes.length; k++) {
     const voteIndex = commentVotes[k]
-    const vote = await contract.methods.votes(voteIndex).call()
+    const vote = await contract.methods.votes(voteIndex).call({from: addr})
     if(comment.votes && !vote.changed) comment.votes.push(vote)
     else if(!vote.changed) comment.votes = [ vote ]
   }
   comment.consensus = getConsensus(comment)
 
-  const commentComments = await contract.methods.getCommentComments(commentId)
-    .call()
+  const commentComments = await contract.methods.getCommentComments(commentId).call({from: addr})
   for(let k = 0; k < commentComments.length; k++) {
     const commentIndex = commentComments[k]
     const comments = await getComment(commentComments[k])
@@ -87,19 +86,19 @@ function getVotesCount(obj) {
   return obj.comments ? obj.comments.reduce((count, comment) => count + getVotesCount(comment), votesCount) : votesCount
 }
 
-async function getPost(postId) {
-  let post = await contract.methods.posts(postId).call()
-  const postVotes = await contract.methods.getPostVotes(postId).call()
+async function getPost(postId, addr) {
+  let post = await contract.methods.posts(postId).call({from: addr})
+  const postVotes = await contract.methods.getPostVotes(postId).call({from: addr})
   for(let j = 0; j < postVotes.length; j++) {
     const voteIndex = postVotes[j]
-    const vote = await contract.methods.votes(voteIndex).call()
+    const vote = await contract.methods.votes(voteIndex).call({from: addr})
     if(post.votes && !vote.changed) post.votes.push(vote)
     else if(!vote.changed) post.votes = [ vote ]
   }
 
   post.consensus = getConsensus(post)
 
-  const postComments = await contract.methods.getPostComments(postId).call()
+  const postComments = await contract.methods.getPostComments(postId).call({from: addr})
   for(let j = 0; j < postComments.length; j++) {
     const comment = await getComment(postComments[j])
     if(post.comments) post.comments.push(comment)
@@ -118,8 +117,8 @@ exports.getPost = async (postId) => {
   return await getPost(postId)
 }
 
-exports.getPosts = async () => {
-  const c = await contract.methods.postCount().call()
+exports.getPosts = async (addr) => {
+  const c = await contract.methods.postCount().call({from: addr})
   let posts = []
   for(let i = 0; i < c; i++) {
     posts.push(await getPost(i))
@@ -130,7 +129,7 @@ exports.getPosts = async () => {
 
 exports.votePost = async (postId, up, addr) => {
   const addVote = contract.methods.addVote(postId, up)
-  const gas = await addVote.estimateGas()
+  const gas = await addVote.estimateGas({from: addr})
   console.log("addVote gas: " + gas)
   const tx = await addVote.send({from: addr, gas: gas})
   console.log(tx.status ? "SUCCESS: Vote added." : "Tx FAILED.")
@@ -139,7 +138,7 @@ exports.votePost = async (postId, up, addr) => {
 
 exports.commentPost = async (postId, comment, addr) => {
   const addComment = contract.methods.addComment(postId, comment)
-  const gas = await addComment.estimateGas()
+  const gas = await addComment.estimateGas({from: addr})
   console.log("addComment gas: " + gas)
   const tx = await addComment.send({from: addr, gas: gas})
   console.log(tx.status ? "SUCCESS: Comment added." : "Tx FAILED.")
@@ -148,7 +147,7 @@ exports.commentPost = async (postId, comment, addr) => {
 
 exports.voteComment = async (commentId, up, addr) => {
   const addCommentVote = contract.methods.addCommentVote(commentId, up)
-  const gas = await addCommentVote.estimateGas()
+  const gas = await addCommentVote.estimateGas({from: addr})
   console.log("addCommentVote gas: " + gas)
   const tx = await addCommentVote.send({from: addr, gas: gas})
   console.log(tx.status ? "SUCCESS: Voted on comment." : "Tx FAILED.")
@@ -157,7 +156,7 @@ exports.voteComment = async (commentId, up, addr) => {
 
 exports.commentComment = async (commentId, comment, addr) => {
   const addCommentComment = contract.methods.addCommentComment(commentId, comment)
-  const gas = await addCommentComment.estimateGas()
+  const gas = await addCommentComment.estimateGas({from: addr})
   console.log("addCommentComment gas: " + gas)
   const tx = await addCommentComment.send({from: addr, gas: gas})
   console.log(tx.status ? "SUCCESS: Commented on comment." : "Tx FAILED.")

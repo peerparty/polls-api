@@ -59,12 +59,12 @@ async function postPosts(req, res) {
 }
 
 async function getPosts(req, res) {
-  try { res.json(await posts.getPosts()) }
+  try { res.json(await posts.getPosts(req.session.addr)) }
   catch(err) { fail(req, res, err) }
 }
 
 async function getPost(req, res) {
-  try { res.json(await posts.getPost(req.params.id)) }
+  try { res.json(await posts.getPost(req.params.id, req.session.addr)) }
   catch(err) { fail(req, res, err) }
 }
 
