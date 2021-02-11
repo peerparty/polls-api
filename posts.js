@@ -1,12 +1,12 @@
 const Web3 = require('web3'),
   fs = require('fs'),
-  contractAddr = require('../address')
+  config = require('../config').config
 
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 const source = fs.readFileSync("../consensus.json")
 const contracts = JSON.parse(source)["contracts"]
 const abi =contracts["consensus.sol:Posts"].abi
-const contract = new web3.eth.Contract(abi, contractAddr.contractAddress)
+const contract = new web3.eth.Contract(abi, config.contract)
 
 // make a call to a contract
 async function exec(addr, call, desc) {
@@ -47,7 +47,6 @@ async function getComment(commentId, addr) {
 
   const commentComments = await contract.methods.getCommentComments(commentId).call({from: addr})
   for(let k = 0; k < commentComments.length; k++) {
-    const commentIndex = commentComments[k]
     const comments = await getComment(commentComments[k])
     if(comment.comments) comment.comments.push(comments)
     else comment.comments = [ comments ]
