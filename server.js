@@ -3,99 +3,14 @@ const express = require('express'),
   bodyParser = require('body-parser'),
   cookieParser = require('cookie-parser'),
   posts = require('./posts'),
+  controllers = require('./controllers'),
+  auth = require('./middleware').auth,
   creds = require('../creds').creds,
-  config = require('../config').config
+  config = require('../config').config,
+  contractAddr = require('../address').contractAddress
 
 const port = config['port'] 
 const pathPrefix = config['pathPrefix'] 
-
-function auth(req, res, next) {
-  if(!req.session.user) {
-    res.status(403).json({ 'msg': 'Unauthorized'})
-  } else next()
-}
-
-function fail(req, res, err) {
-  console.error(err.stack)  
-  res.status(500).json({ 'msg': 'Server error' })
-}
-
-async function getUser(req, res) {
-  req.session.balance = await posts.getBalance(req.session.addr)
-  res.json({user: req.session.user, balance: req.session.balance})
-}
-
-async function login(req, res) {
-  if(creds[req.body.name].pwd == req.body.pwd) {
-    req.session.user = req.body.name
-    req.session.auth = true
-    req.session.addr = creds[req.body.name].addr
-    req.session.pwd = req.body.pwd
-    req.session.balance = await posts.getBalance(req.session.addr)
-    posts.unlockAccount(req.session.addr, req.body.pwd)
-    res.json({user: req.session.user, balance: req.session.balance})
-  } else res.status(403).json({ 'msg': 'Unauthorized'})
-}
-
-function logout(req, res) {
-  req.session.destroy(err => {
-    if(err) fail(req, res, err)
-    else res.json({ 'msg': 'Success' })
-  })
-}
-
-async function createAccount(req, res) {
-  try {
-    const a = await posts.createAccount(req.body.pwd)
-    res.json(a)
-  } catch(err) { fail(req, res, err) }
-}
-
-async function postPosts(req, res) {
-  try {
-    await posts.addPost(req.body.title, req.body.description, req.session.addr)
-    res.json({ 'msg': 'Post created.' })
-  } catch(err) { fail(req, res, err) }
-}
-
-async function getPosts(req, res) {
-  try { res.json(await posts.getPosts(req.session.addr)) }
-  catch(err) { fail(req, res, err) }
-}
-
-async function getPost(req, res) {
-  try { res.json(await posts.getPost(req.params.id, req.session.addr)) }
-  catch(err) { fail(req, res, err) }
-}
-
-async function postPostVotes(req, res) {
-  try {
-    await posts.votePost(req.params.id, req.body.up === 'true', req.session.addr)
-    res.json({ 'msg': 'Vote received.' })
-  } catch(err) { fail(req, res, err) }
-}
-
-async function postPostComments(req, res) {
-  console.log(req.params.id, req.body.comment)
-  try {
-    await posts.commentPost(req.params.id, req.body.comment, req.session.addr)
-    res.json({ 'msg': 'Comment received.' })
-  } catch(err) { fail(req, res, err) }
-}
-
-async function postCommentVotes(req, res) {
-  try {
-    await posts.voteComment(req.params.id, req.body.up === 'true', req.session.addr)
-    res.json({ 'msg': 'Vote received.'})
-  } catch(err) { fail(req, res, err) }
-}
-
-async function postCommentComments(req, res) {
-  try {
-    await posts.commentComment(req.params.id, req.body.comment, req.session.addr)
-    res.json({ 'msg': 'Comment received.'})
-  } catch(err) { fail(req, res, err) }
-}
 
 const app = express()
 
@@ -110,17 +25,17 @@ app.use(session({
 }))
 
 app.use(bodyParser.urlencoded({ extended: false }))
-app.get(`${pathPrefix}/me`, auth, getUser)
-app.post(`${pathPrefix}/login`, login)
-app.post(`${pathPrefix}/logout`, auth, logout)
-app.post(`${pathPrefix}/users`, createAccount)
-app.post(`${pathPrefix}/posts`, auth, postPosts)
-app.get(`${pathPrefix}/posts`, auth, getPosts)
-app.get(`${pathPrefix}/posts/:id`, auth, getPost)
-app.post(`${pathPrefix}/posts/:id/votes`, auth, postPostVotes)
-app.post(`${pathPrefix}/posts/:id/comments`, auth, postPostComments)
-app.post(`${pathPrefix}/comments/:id/votes`, auth, postCommentVotes)
-app.post(`${pathPrefix}/comments/:id/comments`, auth, postCommentComments)
+app.get(`${pathPrefix}/me`, auth, controllers.getUser)
+app.post(`${pathPrefix}/login`, controllers.login)
+app.post(`${pathPrefix}/logout`, auth, controllers.logout)
+app.post(`${pathPrefix}/users`, controllers.createAccount)
+app.post(`${pathPrefix}/posts`, auth, controllers.postPosts)
+app.get(`${pathPrefix}/posts`, auth, controllers.getPosts)
+app.get(`${pathPrefix}/posts/:id`, auth, controllers.getPost)
+app.post(`${pathPrefix}/posts/:id/votes`, auth, controllers.postPostVotes)
+app.post(`${pathPrefix}/posts/:id/comments`, auth, controllers.postPostComments)
+app.post(`${pathPrefix}/comments/:id/votes`, auth, controllers.postCommentVotes)
+app.post(`${pathPrefix}/comments/:id/comments`, auth, controllers.postCommentComments)
 
 app.listen(port, () => console.log(`polls-api listening on port ${port}!`))
 

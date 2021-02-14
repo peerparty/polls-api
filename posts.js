@@ -6,14 +6,31 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 const source = fs.readFileSync("../consensus.json")
 const contracts = JSON.parse(source)["contracts"]
 const abi = JSON.parse(contracts["consensus.sol:Posts"].abi)
-const contract = new web3.eth.Contract(abi, contractAddr.contractAddress)
 
 exports.getBalance = async addr => {
   let b = await web3.eth.getBalance(addr)
   return web3.utils.fromWei(`${b}`, 'ether')
 }
 
-exports.addPost = async (title, description, addr) => {
+exports.deployContract = async (addr) => {
+  const source = fs.readFileSync("../consensus.json")
+  const contracts = JSON.parse(source)["contracts"]
+  const abi = JSON.parse(contracts["consensus.sol:Posts"].abi)
+  const code = '0x' + contracts["consensus.sol:Posts"].bin
+  const contract = new web3.eth.Contract(abi, null, { data: code })
+  const contractDeploy = contract.deploy()
+  const gasPrice = await web3.eth.getGasPrice()
+  const gas = await contractDeploy.estimateGas({ from: addr })
+  const instance = await contractDeploy.send({
+    from: addr,
+    gasPrice: gasPrice,
+    gas: gas
+  })
+  return instance.options.address
+}
+
+exports.addPost = async (title, description, addr, contractAddr) => {
+  const contract = new web3.eth.Contract(abi, contractAddr)
   const addPost = contract.methods.addPost(title, description)
   const gas = await addPost.estimateGas({from: addr})
   console.log("addPost gas: " + gas)
@@ -22,13 +39,15 @@ exports.addPost = async (title, description, addr) => {
   return tx.status
 }
 
-exports.countPosts = async (addr) => {
+exports.countPosts = async (addr, contractAddr) => {
+  const contract = new web3.eth.Contract(abi, contractAddr)
   const c = await contract.methods.postCount().call({from: addr})
   console.log("# Posts: " + c)
   return c
 }
 
-async function getComment(commentId, addr) {
+async function getComment(commentId, addr, contractAddr) {
+  const contract = new web3.eth.Contract(abi, contractAddr)
   let comment = await contract.methods.comments(commentId).call({from: addr})
   
   const commentVotes = await contract.methods.getCommentVotes(commentId).call({from: addr})
@@ -43,7 +62,7 @@ async function getComment(commentId, addr) {
   const commentComments = await contract.methods.getCommentComments(commentId).call({from: addr})
   for(let k = 0; k < commentComments.length; k++) {
     const commentIndex = commentComments[k]
-    const comments = await getComment(commentComments[k])
+    const comments = await getComment(commentComments[k], addr, contractAddr)
     if(comment.comments) comment.comments.push(comments)
     else comment.comments = [ comments ]
   }
@@ -51,8 +70,8 @@ async function getComment(commentId, addr) {
   return comment
 }
 
-exports.getComment = async (commentId) => {
-  return await getComment(commentId)
+exports.getComment = async (commentId, contractAddr) => {
+  return await getComment(commentId, contractAddr)
 }
 
 function getConsensus(obj) {
@@ -86,7 +105,9 @@ function getVotesCount(obj) {
   return obj.comments ? obj.comments.reduce((count, comment) => count + getVotesCount(comment), votesCount) : votesCount
 }
 
-async function getPost(postId, addr) {
+async function getPost(postId, addr, contractAddr) {
+  console.log("GET POST", contractAddr)
+  const contract = new web3.eth.Contract(abi, contractAddr)
   let post = await contract.methods.posts(postId).call({from: addr})
   const postVotes = await contract.methods.getPostVotes(postId).call({from: addr})
   for(let j = 0; j < postVotes.length; j++) {
@@ -100,7 +121,7 @@ async function getPost(postId, addr) {
 
   const postComments = await contract.methods.getPostComments(postId).call({from: addr})
   for(let j = 0; j < postComments.length; j++) {
-    const comment = await getComment(postComments[j])
+    const comment = await getComment(postComments[j], addr, contractAddr)
     if(post.comments) post.comments.push(comment)
     else post.comments = [ comment ]
   }
@@ -113,21 +134,25 @@ async function getPost(postId, addr) {
   return post
 }
 
-exports.getPost = async (postId) => {
-  return await getPost(postId)
+exports.getPost = async (postId, addr, contractAddr) => {
+  console.log("EXPORT GET POST", contractAddr)
+  return await getPost(postId, addr, contractAddr)
 }
 
-exports.getPosts = async (addr) => {
+exports.getPosts = async (addr, contractAddr) => {
+  console.log("GET POSTS", contractAddr)
+  const contract = new web3.eth.Contract(abi, contractAddr)
   const c = await contract.methods.postCount().call({from: addr})
   let posts = []
   for(let i = 0; i < c; i++) {
-    posts.push(await getPost(i))
+    posts.push(await getPost(i, addr, contractAddr))
   }
 
   return posts
 }
 
-exports.votePost = async (postId, up, addr) => {
+exports.votePost = async (postId, up, addr, contractAddr) => {
+  const contract = new web3.eth.Contract(abi, contractAddr)
   const addVote = contract.methods.addVote(postId, up)
   const gas = await addVote.estimateGas({from: addr})
   console.log("addVote gas: " + gas)
@@ -136,7 +161,8 @@ exports.votePost = async (postId, up, addr) => {
   return tx.status
 }
 
-exports.commentPost = async (postId, comment, addr) => {
+exports.commentPost = async (postId, comment, addr, contractAddr) => {
+  const contract = new web3.eth.Contract(abi, contractAddr)
   const addComment = contract.methods.addComment(postId, comment)
   const gas = await addComment.estimateGas({from: addr})
   console.log("addComment gas: " + gas)
@@ -145,7 +171,8 @@ exports.commentPost = async (postId, comment, addr) => {
   return tx.status
 }
 
-exports.voteComment = async (commentId, up, addr) => {
+exports.voteComment = async (commentId, up, addr, contractAddr) => {
+  const contract = new web3.eth.Contract(abi, contractAddr)
   const addCommentVote = contract.methods.addCommentVote(commentId, up)
   const gas = await addCommentVote.estimateGas({from: addr})
   console.log("addCommentVote gas: " + gas)
@@ -154,7 +181,8 @@ exports.voteComment = async (commentId, up, addr) => {
   return tx.status
 }
 
-exports.commentComment = async (commentId, comment, addr) => {
+exports.commentComment = async (commentId, comment, addr, contractAddr) => {
+  const contract = new web3.eth.Contract(abi, contractAddr)
   const addCommentComment = contract.methods.addCommentComment(commentId, comment)
   const gas = await addCommentComment.estimateGas({from: addr})
   console.log("addCommentComment gas: " + gas)
