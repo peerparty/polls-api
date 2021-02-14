@@ -1,6 +1,7 @@
 const posts = require('./posts'),
   creds = require('../creds').creds,
-  contractAddr = require('../address').contractAddress
+  config = require('../config').config,
+  contractAddr = config.contract 
 
 function fail(req, res, err) {
   console.error(err.stack)  
@@ -57,6 +58,7 @@ exports.getPosts = async (req, res) => {
 }
 
 exports.getPost = async (req, res) => {
+  console.log("CON GET POST", req.params.id,req.session.addr,req.session.contractAddr)
   try {
     res.json(await posts.getPost(
       req.params.id,

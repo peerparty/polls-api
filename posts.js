@@ -1,12 +1,10 @@
 const Web3 = require('web3'),
-  fs = require('fs'),
-  config = require('../config').config
+  fs = require('fs')
 
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 const source = fs.readFileSync("../consensus.json")
 const contracts = JSON.parse(source)["contracts"]
-const abi =contracts["consensus.sol:Posts"].abi
-const contract = new web3.eth.Contract(abi, config.contract)
+const abi = contracts["consensus.sol:Posts"].abi
 
 // make a call to a contract
 async function exec(addr, call, desc) {
@@ -23,36 +21,9 @@ exports.getBalance = async addr => {
   return web3.utils.fromWei(`${b}`, 'ether')
 }
 
-<<<<<<< HEAD
-exports.deployContract = async (addr) => {
-  const source = fs.readFileSync("../consensus.json")
-  const contracts = JSON.parse(source)["contracts"]
-  const abi = JSON.parse(contracts["consensus.sol:Posts"].abi)
-  const code = '0x' + contracts["consensus.sol:Posts"].bin
-  const contract = new web3.eth.Contract(abi, null, { data: code })
-  const contractDeploy = contract.deploy()
-  const gasPrice = await web3.eth.getGasPrice()
-  const gas = await contractDeploy.estimateGas({ from: addr })
-  const instance = await contractDeploy.send({
-    from: addr,
-    gasPrice: gasPrice,
-    gas: gas
-  })
-  return instance.options.address
-}
-
 exports.addPost = async (title, description, addr, contractAddr) => {
   const contract = new web3.eth.Contract(abi, contractAddr)
-  const addPost = contract.methods.addPost(title, description)
-  const gas = await addPost.estimateGas({from: addr})
-  console.log("addPost gas: " + gas)
-  const tx = await addPost.send({from: addr, gas: gas})
-  console.log(tx.status ? "SUCCESS: Post added." : "Tx FAILED.")
-  return tx.status
-=======
-exports.addPost = async (title, description, addr) => {
   return await exec(addr, contract.methods.addPost(title, description), "Post added")
->>>>>>> 8a5e2755635b756fba3185f9671776c414ffcfad
 }
 
 exports.countPosts = async (addr, contractAddr) => {
@@ -65,7 +36,6 @@ exports.countPosts = async (addr, contractAddr) => {
 async function getComment(commentId, addr, contractAddr) {
   const contract = new web3.eth.Contract(abi, contractAddr)
   let comment = await contract.methods.comments(commentId).call({from: addr})
-  
   const commentVotes = await contract.methods.getCommentVotes(commentId).call({from: addr})
   for(let k = 0; k < commentVotes.length; k++) {
     const voteIndex = commentVotes[k]
@@ -77,12 +47,7 @@ async function getComment(commentId, addr, contractAddr) {
 
   const commentComments = await contract.methods.getCommentComments(commentId).call({from: addr})
   for(let k = 0; k < commentComments.length; k++) {
-<<<<<<< HEAD
-    const commentIndex = commentComments[k]
     const comments = await getComment(commentComments[k], addr, contractAddr)
-=======
-    const comments = await getComment(commentComments[k])
->>>>>>> 8a5e2755635b756fba3185f9671776c414ffcfad
     if(comment.comments) comment.comments.push(comments)
     else comment.comments = [ comments ]
   }
@@ -90,8 +55,8 @@ async function getComment(commentId, addr, contractAddr) {
   return comment
 }
 
-exports.getComment = async (commentId, contractAddr) => {
-  return await getComment(commentId, contractAddr)
+exports.getComment = async (commentId) => {
+  return await getComment(commentId)
 }
 
 function getConsensus(obj) {
@@ -126,7 +91,7 @@ function getVotesCount(obj) {
 }
 
 async function getPost(postId, addr, contractAddr) {
-  console.log("GET POST", contractAddr)
+  console.log("getPost", postId, addr, contractAddr)
   const contract = new web3.eth.Contract(abi, contractAddr)
   let post = await contract.methods.posts(postId).call({from: addr})
   const postVotes = await contract.methods.getPostVotes(postId).call({from: addr})
@@ -155,12 +120,10 @@ async function getPost(postId, addr, contractAddr) {
 }
 
 exports.getPost = async (postId, addr, contractAddr) => {
-  console.log("EXPORT GET POST", contractAddr)
   return await getPost(postId, addr, contractAddr)
 }
 
 exports.getPosts = async (addr, contractAddr) => {
-  console.log("GET POSTS", contractAddr)
   const contract = new web3.eth.Contract(abi, contractAddr)
   const c = await contract.methods.postCount().call({from: addr})
   let posts = []
@@ -171,61 +134,24 @@ exports.getPosts = async (addr, contractAddr) => {
   return posts
 }
 
-<<<<<<< HEAD
 exports.votePost = async (postId, up, addr, contractAddr) => {
   const contract = new web3.eth.Contract(abi, contractAddr)
-  const addVote = contract.methods.addVote(postId, up)
-  const gas = await addVote.estimateGas({from: addr})
-  console.log("addVote gas: " + gas)
-  const tx = await addVote.send({from: addr, gas: gas})
-  console.log(tx.status ? "SUCCESS: Vote added." : "Tx FAILED.")
-  return tx.status
+  return await exec(addr, contract.methods.addVote(postId, up), "Vote added")
 }
 
 exports.commentPost = async (postId, comment, addr, contractAddr) => {
   const contract = new web3.eth.Contract(abi, contractAddr)
-  const addComment = contract.methods.addComment(postId, comment)
-  const gas = await addComment.estimateGas({from: addr})
-  console.log("addComment gas: " + gas)
-  const tx = await addComment.send({from: addr, gas: gas})
-  console.log(tx.status ? "SUCCESS: Comment added." : "Tx FAILED.")
-  return tx.status
+  return await exec(addr, contract.methods.addComment(postId, comment), "Comment added")
 }
 
 exports.voteComment = async (commentId, up, addr, contractAddr) => {
   const contract = new web3.eth.Contract(abi, contractAddr)
-  const addCommentVote = contract.methods.addCommentVote(commentId, up)
-  const gas = await addCommentVote.estimateGas({from: addr})
-  console.log("addCommentVote gas: " + gas)
-  const tx = await addCommentVote.send({from: addr, gas: gas})
-  console.log(tx.status ? "SUCCESS: Voted on comment." : "Tx FAILED.")
-  return tx.status
+  return await exec(addr, contract.methods.addCommentVote(commentId, up), "Voted on comment")
 }
 
 exports.commentComment = async (commentId, comment, addr, contractAddr) => {
   const contract = new web3.eth.Contract(abi, contractAddr)
-  const addCommentComment = contract.methods.addCommentComment(commentId, comment)
-  const gas = await addCommentComment.estimateGas({from: addr})
-  console.log("addCommentComment gas: " + gas)
-  const tx = await addCommentComment.send({from: addr, gas: gas})
-  console.log(tx.status ? "SUCCESS: Commented on comment." : "Tx FAILED.")
-  return tx.status
-=======
-exports.votePost = async (postId, up, addr) => {
-  return await exec(addr, contract.methods.addVote(postId, up), "Vote added")
-}
-
-exports.commentPost = async (postId, comment, addr) => {
-  return await exec(addr, contract.methods.addComment(postId, comment), "Comment added")
-}
-
-exports.voteComment = async (commentId, up, addr) => {
-  return await exec(addr, contract.methods.addCommentVote(commentId, up), "Voted on comment")
-}
-
-exports.commentComment = async (commentId, comment, addr) => {
   return await exec(addr, contract.methods.addCommentComment(commentId, comment), "Commented on comment")
->>>>>>> 8a5e2755635b756fba3185f9671776c414ffcfad
 }
 
 async function _sendFunds(account) {
@@ -246,4 +172,5 @@ exports.createAccount = async password => {
 exports.unlockAccount = (addr, password) => { 
   web3.eth.personal.unlockAccount(addr, password)
 }
+
 
