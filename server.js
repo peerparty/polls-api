@@ -6,8 +6,7 @@ const express = require('express'),
   controllers = require('./controllers'),
   auth = require('./middleware').auth,
   creds = require('../creds').creds,
-  config = require('../config').config,
-  contractAddr = require('../address').contractAddress
+  config = require('../config').config
 
 const port = config['port'] 
 const pathPrefix = config['pathPrefix'] 
