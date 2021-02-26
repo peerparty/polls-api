@@ -46,6 +46,7 @@ exports.postPosts = async (req, res) => {
       req.body.title,
       req.body.description,
       req.session.addr,
+      req.session.pwd,
       req.session.contractAddr)
     res.json({ 'msg': 'Post created.' })
   } catch(err) { fail(req, res, err) }
@@ -74,6 +75,7 @@ exports.postPostVotes = async (req, res) => {
       req.params.id,
       req.body.up === 'true',
       req.session.addr,
+      req.session.pwd,
       req.session.contractAddr)
     res.json({ 'msg': 'Vote received.' })
   } catch(err) { fail(req, res, err) }
@@ -86,6 +88,7 @@ exports.postPostComments = async (req, res) => {
       req.params.id,
       req.body.comment, 
       req.session.addr,
+      req.session.pwd,
       req.session.contractAddr)
     res.json({ 'msg': 'Comment received.' })
   } catch(err) { fail(req, res, err) }
@@ -97,6 +100,7 @@ exports.postCommentVotes = async (req, res) => {
       req.params.id,
       req.body.up === 'true', 
       req.session.addr,
+      req.session.pwd,
       req.session.contractAddr)
     res.json({ 'msg': 'Vote received.'})
   } catch(err) { fail(req, res, err) }
@@ -108,6 +112,7 @@ exports.postCommentComments = async (req, res) => {
       req.params.id,
       req.body.comment,
       req.session.addr,
+      req.session.pwd,
       req.session.contractAddr)
     res.json({ 'msg': 'Comment received.'})
   } catch(err) { fail(req, res, err) }
