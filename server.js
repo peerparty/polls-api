@@ -18,7 +18,7 @@ app.use(bodyParser.json({ limit: '50mb' }))
 app.use(cookieParser())
 app.use(session({
   secret: creds['secret'],
-  cookie: { maxAge: 600000 },
+  cookie: { maxAge: 604800000 }, // 7 days - JBG
   resave: false,
   saveUninitialized: true
 }))
